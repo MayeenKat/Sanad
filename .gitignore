@@ -1,0 +1,32 @@
+# Node / Expo
+node_modules/
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+mobile/ios/
+mobile/android/
+.metro-health-check*
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+
+# Env / OS / IDE
+.env
+.env.*
+!.env.example
+.DS_Store
+.idea/
+.vscode/
+npm-debug.*
+yarn-error.*
