@@ -31,6 +31,17 @@ class Finding(BaseModel):
     detail: str
 
 
+class BusinessIdentifiers(BaseModel):
+    """Issuer identifiers found in the document text, for lookup in official UAE registries."""
+
+    licence_numbers: list[str] = Field(default_factory=list)
+    tax_registration_numbers: list[str] = Field(default_factory=list)
+    trade_name: str | None = None
+
+    def is_empty(self) -> bool:
+        return not (self.licence_numbers or self.tax_registration_numbers or self.trade_name)
+
+
 class DocumentReport(BaseModel):
     filename: str
     kind: str
@@ -38,6 +49,7 @@ class DocumentReport(BaseModel):
     size_bytes: int
     metadata: dict[str, str] = Field(default_factory=dict)
     findings: list[Finding] = Field(default_factory=list)
+    business: BusinessIdentifiers = Field(default_factory=BusinessIdentifiers)
 
     @property
     def score(self) -> int:
@@ -55,3 +67,4 @@ class AnalysisResult(BaseModel):
     summary: str
     documents: list[DocumentReport]
     findings: list[Finding]
+    business: BusinessIdentifiers = Field(default_factory=BusinessIdentifiers)

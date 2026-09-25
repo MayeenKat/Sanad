@@ -9,6 +9,12 @@ export interface Finding {
   detail: string;
 }
 
+export interface BusinessIdentifiers {
+  licence_numbers: string[];
+  tax_registration_numbers: string[];
+  trade_name: string | null;
+}
+
 export interface DocumentReport {
   filename: string;
   kind: "pdf" | "image" | "unknown";
@@ -16,6 +22,7 @@ export interface DocumentReport {
   size_bytes: number;
   metadata: Record<string, string>;
   findings: Finding[];
+  business: BusinessIdentifiers;
 }
 
 export interface AnalysisResult {
@@ -24,6 +31,7 @@ export interface AnalysisResult {
   summary: string;
   documents: DocumentReport[];
   findings: Finding[];
+  business: BusinessIdentifiers;
 }
 
 export interface ScanDocument {

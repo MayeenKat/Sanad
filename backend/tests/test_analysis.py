@@ -6,6 +6,7 @@ from fastapi.testclient import TestClient
 
 from app.analysis.common import check_text_content
 from app.analysis.engine import aggregate, analyze_document
+from app.analysis.licence import check_business_identifiers, extract_business_identifiers
 from app.main import app
 from tests.fixtures import add_incremental_update, make_jpeg, make_pdf, make_png
 
@@ -102,6 +103,16 @@ def test_invalid_iban_in_pdf_text():
     assert "invalid_iban" in codes(report)
 
 
+def test_spaced_iban_groups_are_joined():
+    pdf = make_pdf("From account: AE07 0331 2345 6789 0123 456\nTo: AE46 0090 0000 0012 3456 789")
+    report = analyze_document(pdf, "receipt.pdf", "application/pdf")
+    assert not any(code.startswith("invalid_iban") for code in codes(report))
+
+    pdf = make_pdf("Beneficiary IBAN: AE12 0345 0000 0000 1111 222")
+    report = analyze_document(pdf, "receipt.pdf", "application/pdf")
+    assert "invalid_iban" in codes(report)
+
+
 def test_corrupt_pdf():
     report = analyze_document(b"%PDF-1.7 garbage", "x.pdf", "application/pdf")
     assert "unreadable_pdf" in codes(report)
@@ -127,6 +138,31 @@ def test_future_date_in_text():
     findings = check_text_content("Paid on 31/12/2030", now=NOW)
     assert findings[0].code == "future_date_in_text"
     assert check_text_content("Paid on 01/03/2024", now=NOW) == []
+
+
+# --- business identifiers ------------------------------------------------
+
+
+def test_extracts_licence_and_trn():
+    text = "Trade Name: Al Noor Trading LLC\nTrade Licence No: CN-1234567\nTRN: 100 2345 6789 0003"
+    ids = extract_business_identifiers(text)
+    assert ids.licence_numbers == ["CN-1234567"]
+    assert ids.tax_registration_numbers == ["100234567890003"]
+    assert ids.trade_name == "Al Noor Trading LLC"
+    assert check_business_identifiers(ids) == []
+
+
+def test_invalid_trn_flagged():
+    ids = extract_business_identifiers("TRN 123456789")
+    findings = check_business_identifiers(ids)
+    assert findings and findings[0].code == "invalid_trn"
+
+
+def test_pdf_report_carries_business_identifiers():
+    pdf = make_pdf("Tax Invoice\nLicense No. 987654\nTRN: 100987654321003")
+    result = aggregate([analyze_document(pdf, "invoice.pdf", "application/pdf")])
+    assert result.business.licence_numbers == ["987654"]
+    assert result.business.tax_registration_numbers == ["100987654321003"]
 
 
 # --- api -------------------------------------------------------------------

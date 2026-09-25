@@ -70,6 +70,7 @@ export default function AnalyzingScreen() {
     setAttempt((a) => a + 1);
   }, []);
   const goBack = useCallback(() => router.replace("/"), []);
+  const openSettings = useCallback(() => router.push("/settings"), []);
 
   const scale = pulse.interpolate({ inputRange: [0, 1], outputRange: [1, 1.12] });
   const opacity = pulse.interpolate({ inputRange: [0, 1], outputRange: [0.35, 0.05] });
@@ -79,14 +80,18 @@ export default function AnalyzingScreen() {
       {error ? (
         <View style={styles.center}>
           <View style={[styles.iconWrap, styles.iconWrapError]}>
-            <Ionicons name="cloud-offline-outline" size={44} color={colors.warning} />
+            <Ionicons name="alert-circle-outline" size={44} color={colors.warning} />
           </View>
           <Text style={styles.title}>Verification unavailable</Text>
           <Text style={styles.body}>{error}</Text>
           <View style={styles.actions}>
             <Pressable style={styles.primary} onPress={retry} accessibilityRole="button">
-              <Ionicons name="refresh" size={18} color={colors.background} />
+              <Ionicons name="refresh" size={18} color={colors.white} />
               <Text style={styles.primaryText}>Try again</Text>
+            </Pressable>
+            <Pressable style={styles.outline} onPress={openSettings} accessibilityRole="button">
+              <Ionicons name="settings-outline" size={18} color={colors.navy} />
+              <Text style={styles.outlineText}>Verification settings</Text>
             </Pressable>
             <Pressable style={styles.secondary} onPress={goBack} accessibilityRole="button">
               <Text style={styles.secondaryText}>Back to camera</Text>
@@ -98,7 +103,7 @@ export default function AnalyzingScreen() {
           <View style={styles.pulseWrap}>
             <Animated.View style={[styles.pulseRing, { opacity, transform: [{ scale }] }]} />
             <View style={styles.iconWrap}>
-              <Ionicons name="shield-half" size={44} color={colors.brand} />
+              <Ionicons name="shield-half" size={44} color={colors.navy} />
             </View>
           </View>
           <Text style={styles.title}>Verifying {documents.length > 1 ? `${documents.length} pages` : "document"}</Text>
@@ -162,7 +167,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   iconWrapError: {
-    backgroundColor: "rgba(245, 165, 36, 0.16)",
+    backgroundColor: "rgba(224, 155, 26, 0.14)",
     marginBottom: spacing.md,
   },
   title: {
@@ -209,11 +214,25 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     paddingVertical: 16,
     borderRadius: radii.pill,
-    backgroundColor: colors.brand,
+    backgroundColor: colors.navy,
   },
   primaryText: {
     ...typography.heading,
-    color: colors.background,
+    color: colors.white,
+  },
+  outline: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: spacing.sm,
+    paddingVertical: 14,
+    borderRadius: radii.pill,
+    borderWidth: 1.5,
+    borderColor: colors.navy,
+  },
+  outlineText: {
+    ...typography.heading,
+    color: colors.navy,
   },
   secondary: {
     alignItems: "center",

@@ -6,8 +6,8 @@
     "scheme": "sanad",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "dark",
-    "backgroundColor": "#0B0F14",
+    "userInterfaceStyle": "light",
+    "backgroundColor": "#FFFFFF",
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "ae.sanad.app",
@@ -20,7 +20,7 @@
     "android": {
       "package": "ae.sanad.app",
       "adaptiveIcon": {
-        "backgroundColor": "#0B0F14",
+        "backgroundColor": "#FFFFFF",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -47,12 +47,30 @@
         "expo-image-picker",
         {
           "photosPermission": "SANAD needs access to your photos so you can upload a document to verify.",
-          "cameraPermission": false,
+          "cameraPermission": "SANAD uses the camera to scan documents and receipts so it can check whether they are genuine.",
           "microphonePermission": false
         }
       ],
       "expo-document-picker",
-      "expo-font"
+      "expo-font",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 220,
+          "resizeMode": "contain",
+          "backgroundColor": "#FFFFFF"
+        }
+      ],
+      "expo-web-browser",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

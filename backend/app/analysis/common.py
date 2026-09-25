@@ -202,7 +202,7 @@ def _humanize(delta: timedelta) -> str:
 # --- Content checks --------------------------------------------------------
 
 _EMIRATES_ID = re.compile(r"\b784[- ]?(\d{4})[- ]?(\d{7})[- ]?(\d)\b")
-_IBAN = re.compile(r"\b([A-Z]{2}\d{2}[A-Z0-9]{11,30})\b")
+_IBAN = re.compile(r"\b([A-Z]{2}\d{2}(?: ?[A-Z0-9]{4}){2,7}(?: ?[A-Z0-9]{1,3})?)\b")
 _TEXT_DATE = re.compile(r"\b(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{4})\b")
 
 
@@ -246,9 +246,8 @@ def check_text_content(text: str, *, now: datetime | None = None) -> list[Findin
                 )
             )
 
-    compact = re.sub(r"(?<=[A-Z0-9]) (?=[A-Z0-9]{4}\b)", "", text.upper())
-    for m in _IBAN.finditer(compact):
-        iban = m.group(1)
+    for m in _IBAN.finditer(text.upper()):
+        iban = m.group(1).replace(" ", "")
         if len(iban) < 15 or not iban.startswith(("AE", "SA", "QA", "BH", "KW", "OM", "GB", "DE", "FR")):
             continue
         if iban.startswith("AE") and len(iban) != 23:

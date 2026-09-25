@@ -5,6 +5,7 @@ from app.analysis.pdf import analyze_pdf
 from app.models import (
     FRAUD_THRESHOLD,
     AnalysisResult,
+    BusinessIdentifiers,
     DocumentReport,
     Finding,
     Severity,
@@ -86,7 +87,22 @@ def aggregate(reports: list[DocumentReport]) -> AnalysisResult:
         summary=summary,
         documents=reports,
         findings=findings,
+        business=_merge_business(reports),
     )
+
+
+def _merge_business(reports: list[DocumentReport]) -> BusinessIdentifiers:
+    merged = BusinessIdentifiers()
+    for report in reports:
+        for number in report.business.licence_numbers:
+            if number not in merged.licence_numbers:
+                merged.licence_numbers.append(number)
+        for trn in report.business.tax_registration_numbers:
+            if trn not in merged.tax_registration_numbers:
+                merged.tax_registration_numbers.append(trn)
+        if merged.trade_name is None:
+            merged.trade_name = report.business.trade_name
+    return merged
 
 
 def _fraud_summary(findings: list[Finding]) -> str:
