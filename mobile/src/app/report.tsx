@@ -9,7 +9,7 @@ import { useScan } from "@/lib/scan-context";
 import { colors, radii, spacing, typography } from "@/lib/theme";
 
 const TAMM_URL = "https://www.tamm.abudhabi";
-const TAMM_SEARCH_URL = "https://www.tamm.abudhabi/en/search?q=report%20fraud";
+const TAMM_POLICE_URL = "https://www.tamm.abudhabi/en/life-events/individual/police-services";
 const AMAN_PHONE = "8002626";
 const EMERGENCY_PHONE = "999";
 
@@ -27,7 +27,7 @@ const STEPS: { icon: keyof typeof Ionicons.glyphMap; title: string; body: string
   {
     icon: "search-outline",
     title: "Find the fraud report service",
-    body: "Search for “report a crime” or “fraud” and open the Abu Dhabi Police service for reporting financial fraud.",
+    body: "Go to Police Services and open the Abu Dhabi Police service for reporting a crime or financial fraud. You can also report through the Aman service: call 800 2626, SMS 2828, or email aman@adpolice.gov.ae.",
   },
   {
     icon: "document-attach-outline",
@@ -102,7 +102,7 @@ export default function ReportScreen() {
         <View style={styles.actions}>
           <Pressable
             style={({ pressed }) => [styles.primary, pressed && styles.pressed]}
-            onPress={() => open(TAMM_SEARCH_URL, `Visit ${TAMM_URL} in your browser.`)}
+            onPress={() => open(TAMM_POLICE_URL, `Visit ${TAMM_URL} in your browser.`)}
             accessibilityRole="link"
           >
             <Ionicons name="open-outline" size={20} color={colors.background} />
