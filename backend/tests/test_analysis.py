@@ -103,6 +103,16 @@ def test_invalid_iban_in_pdf_text():
     assert "invalid_iban" in codes(report)
 
 
+def test_spaced_iban_groups_are_joined():
+    pdf = make_pdf("From account: AE07 0331 2345 6789 0123 456\nTo: AE46 0090 0000 0012 3456 789")
+    report = analyze_document(pdf, "receipt.pdf", "application/pdf")
+    assert not any(code.startswith("invalid_iban") for code in codes(report))
+
+    pdf = make_pdf("Beneficiary IBAN: AE12 0345 0000 0000 1111 222")
+    report = analyze_document(pdf, "receipt.pdf", "application/pdf")
+    assert "invalid_iban" in codes(report)
+
+
 def test_corrupt_pdf():
     report = analyze_document(b"%PDF-1.7 garbage", "x.pdf", "application/pdf")
     assert "unreadable_pdf" in codes(report)
