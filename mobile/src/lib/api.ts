@@ -1,3 +1,4 @@
+import { File as LocalFile } from "expo-file-system";
 import { Platform } from "react-native";
 
 import type { AnalysisResult, ScanDocument } from "./types";
@@ -25,7 +26,11 @@ async function appendDocument(form: FormData, doc: ScanDocument): Promise<void> 
     form.append("files", new File([blob], doc.name, { type: doc.mimeType }));
     return;
   }
-  form.append("files", { uri: doc.uri, name: doc.name, type: doc.mimeType } as unknown as Blob);
+  // Expo's fetch serialises multipart parts itself and only accepts Blob-like values
+  // (anything exposing `bytes()`), not React Native's legacy `{ uri }` descriptors.
+  const file = new LocalFile(doc.uri);
+  const part = { name: doc.name, type: doc.mimeType, bytes: () => file.bytes() };
+  form.append("files", part as unknown as Blob);
 }
 
 export async function analyzeDocuments(
@@ -42,8 +47,9 @@ export async function analyzeDocuments(
     response = await fetch(`${API_URL}/analyze`, { method: "POST", body: form, signal });
   } catch (error) {
     if (error instanceof Error && error.name === "AbortError") throw error;
+    const reason = error instanceof Error && error.message ? ` (${error.message})` : "";
     throw new ApiError(
-      `Could not reach the SANAD verification service at ${API_URL}. Check your connection and try again.`,
+      `Could not reach the SANAD verification service at ${API_URL}. Check your connection and try again.${reason}`,
     );
   }
 

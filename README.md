@@ -81,4 +81,14 @@ npx eas-cli@latest build --platform android --profile preview   # produces an in
 
 The `preview` profile in `mobile/eas.json` builds an APK (internal distribution); `production`
 builds an AAB for the Play Store. Set `EXPO_PUBLIC_API_URL` in `eas.json` → `env` (or `.env`) to a
-backend URL reachable from the phone.
+backend URL reachable from the phone. Plain `http://` backends work because `expo-build-properties`
+enables `usesCleartextTraffic` for Android; use HTTPS for a production backend.
+
+Without an Expo account you can build locally (needs the Android SDK / JDK 17):
+
+```bash
+cd mobile
+npx expo prebuild --platform android
+EXPO_PUBLIC_API_URL=http://10.0.2.2:8000 ./android/gradlew -p android :app:assembleRelease
+# -> android/app/build/outputs/apk/release/app-release.apk (debug-signed)
+```
