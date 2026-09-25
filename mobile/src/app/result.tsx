@@ -52,7 +52,8 @@ export default function ResultScreen() {
 
   const done = useCallback(() => {
     reset();
-    router.dismissAll();
+    if (router.canDismiss()) router.dismissAll();
+    else router.replace("/");
   }, [reset]);
 
   if (!result) return null;

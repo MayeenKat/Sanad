@@ -90,20 +90,14 @@ export default function CameraScreen() {
   const handlePickPhotos = useCallback(async () => {
     closeSheet();
     const picked = await pickFromLibrary();
-    if (picked.length) {
-      addDocuments(picked);
-      goVerify(picked);
-    }
-  }, [addDocuments, closeSheet, goVerify]);
+    if (picked.length) addDocuments(picked);
+  }, [addDocuments, closeSheet]);
 
   const handlePickFiles = useCallback(async () => {
     closeSheet();
     const picked = await pickFiles();
-    if (picked.length) {
-      addDocuments(picked);
-      goVerify(picked);
-    }
-  }, [addDocuments, closeSheet, goVerify]);
+    if (picked.length) addDocuments(picked);
+  }, [addDocuments, closeSheet]);
 
   const showCamera = permission?.granted === true;
 

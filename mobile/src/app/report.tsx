@@ -57,7 +57,8 @@ export default function ReportScreen() {
 
   const finish = useCallback(() => {
     reset();
-    router.dismissAll();
+    if (router.canDismiss()) router.dismissAll();
+    else router.replace("/");
   }, [reset]);
 
   return (
