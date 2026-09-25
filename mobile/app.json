@@ -1,0 +1,61 @@
+{
+  "expo": {
+    "name": "SANAD",
+    "slug": "sanad",
+    "version": "1.0.0",
+    "scheme": "sanad",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#0B0F14",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "ae.sanad.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "SANAD uses the camera to scan documents and receipts so it can check whether they are genuine.",
+        "NSPhotoLibraryUsageDescription": "SANAD needs access to your photos so you can upload a document to verify.",
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "ae.sanad.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#0B0F14",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "permissions": [
+        "android.permission.CAMERA"
+      ],
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "SANAD uses the camera to scan documents and receipts so it can check whether they are genuine.",
+          "recordAudioAndroid": false
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "SANAD needs access to your photos so you can upload a document to verify.",
+          "cameraPermission": false,
+          "microphonePermission": false
+        }
+      ],
+      "expo-document-picker",
+      "expo-font"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
