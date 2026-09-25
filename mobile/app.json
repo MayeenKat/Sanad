@@ -47,7 +47,7 @@
         "expo-image-picker",
         {
           "photosPermission": "SANAD needs access to your photos so you can upload a document to verify.",
-          "cameraPermission": false,
+          "cameraPermission": "SANAD uses the camera to scan documents and receipts so it can check whether they are genuine.",
           "microphonePermission": false
         }
       ],
