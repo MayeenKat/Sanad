@@ -19,17 +19,22 @@ export class ApiError extends Error {
   }
 }
 
+async function appendDocument(form: FormData, doc: ScanDocument): Promise<void> {
+  if (Platform.OS === "web") {
+    const blob = await (await fetch(doc.uri)).blob();
+    form.append("files", new File([blob], doc.name, { type: doc.mimeType }));
+    return;
+  }
+  form.append("files", { uri: doc.uri, name: doc.name, type: doc.mimeType } as unknown as Blob);
+}
+
 export async function analyzeDocuments(
   documents: ScanDocument[],
   signal?: AbortSignal,
 ): Promise<AnalysisResult> {
   const form = new FormData();
   for (const doc of documents) {
-    form.append("files", {
-      uri: doc.uri,
-      name: doc.name,
-      type: doc.mimeType,
-    } as unknown as Blob);
+    await appendDocument(form, doc);
   }
 
   let response: Response;

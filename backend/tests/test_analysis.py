@@ -149,8 +149,8 @@ def test_analyze_endpoint_multi_file():
 def test_analyze_endpoint_rejects_unknown_format():
     client = TestClient(app)
     resp = client.post("/analyze", files=[("files", ("notes.txt", b"hello", "text/plain"))])
-    assert resp.status_code == 200
-    assert resp.json()["documents"][0]["findings"][0]["code"] == "unsupported_format"
+    assert resp.status_code == 415
+    assert "notes.txt" in resp.json()["detail"]
 
 
 def test_health():

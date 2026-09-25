@@ -3,7 +3,7 @@ from __future__ import annotations
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.analysis.engine import aggregate, analyze_document
+from app.analysis.engine import UnsupportedFormatError, aggregate, analyze_document
 from app.models import AnalysisResult
 
 MAX_FILE_BYTES = 25 * 1024 * 1024
@@ -41,5 +41,8 @@ async def analyze(files: list[UploadFile] = File(...)) -> AnalysisResult:
             raise HTTPException(status_code=400, detail=f"'{upload.filename}' is empty.")
         if len(data) > MAX_FILE_BYTES:
             raise HTTPException(status_code=413, detail=f"'{upload.filename}' exceeds 25 MB.")
-        reports.append(analyze_document(data, upload.filename or "document", upload.content_type))
+        try:
+            reports.append(analyze_document(data, upload.filename or "document", upload.content_type))
+        except UnsupportedFormatError as exc:
+            raise HTTPException(status_code=415, detail=str(exc)) from exc
     return aggregate(reports)

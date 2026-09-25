@@ -40,6 +40,11 @@ def sniff_kind(data: bytes, mime_type: str | None, filename: str) -> str | None:
     return None
 
 
+class UnsupportedFormatError(ValueError):
+    def __init__(self, filename: str) -> None:
+        super().__init__(f"'{filename}' is not a supported format. SANAD can verify PDF, JPEG and PNG files.")
+
+
 def analyze_document(data: bytes, filename: str, mime_type: str | None) -> DocumentReport:
     kind = sniff_kind(data, mime_type, filename)
     mime = mime_type or "application/octet-stream"
@@ -47,16 +52,7 @@ def analyze_document(data: bytes, filename: str, mime_type: str | None) -> Docum
         return analyze_pdf(data, filename, mime)
     if kind == "image":
         return analyze_image(data, filename, mime)
-    report = DocumentReport(filename=filename, kind="unknown", mime_type=mime, size_bytes=len(data))
-    report.findings.append(
-        Finding(
-            code="unsupported_format",
-            severity=Severity.MEDIUM,
-            title="Unsupported file format",
-            detail="SANAD can verify PDF, JPEG and PNG files. This file is none of those.",
-        )
-    )
-    return report
+    raise UnsupportedFormatError(filename)
 
 
 def aggregate(reports: list[DocumentReport]) -> AnalysisResult:
