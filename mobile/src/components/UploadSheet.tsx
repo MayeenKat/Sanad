@@ -76,7 +76,7 @@ function Option({ icon, title, description, onPress }: OptionProps) {
       accessibilityLabel={title}
     >
       <View style={styles.optionIcon}>
-        <Ionicons name={icon} size={24} color={colors.brand} />
+        <Ionicons name={icon} size={24} color={colors.navy} />
       </View>
       <View style={styles.optionText}>
         <Text style={styles.optionTitle}>{title}</Text>
@@ -94,7 +94,7 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
   },
   sheet: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.background,
     borderTopLeftRadius: radii.lg,
     borderTopRightRadius: radii.lg,
     paddingHorizontal: spacing.lg,
@@ -126,7 +126,7 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     padding: spacing.md,
     borderRadius: radii.md,
-    backgroundColor: colors.surfaceRaised,
+    backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
   },

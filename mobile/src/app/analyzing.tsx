@@ -85,7 +85,7 @@ export default function AnalyzingScreen() {
           <Text style={styles.body}>{error}</Text>
           <View style={styles.actions}>
             <Pressable style={styles.primary} onPress={retry} accessibilityRole="button">
-              <Ionicons name="refresh" size={18} color={colors.background} />
+              <Ionicons name="refresh" size={18} color={colors.white} />
               <Text style={styles.primaryText}>Try again</Text>
             </Pressable>
             <Pressable style={styles.secondary} onPress={goBack} accessibilityRole="button">
@@ -98,7 +98,7 @@ export default function AnalyzingScreen() {
           <View style={styles.pulseWrap}>
             <Animated.View style={[styles.pulseRing, { opacity, transform: [{ scale }] }]} />
             <View style={styles.iconWrap}>
-              <Ionicons name="shield-half" size={44} color={colors.brand} />
+              <Ionicons name="shield-half" size={44} color={colors.navy} />
             </View>
           </View>
           <Text style={styles.title}>Verifying {documents.length > 1 ? `${documents.length} pages` : "document"}</Text>
@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   iconWrapError: {
-    backgroundColor: "rgba(245, 165, 36, 0.16)",
+    backgroundColor: "rgba(224, 155, 26, 0.14)",
     marginBottom: spacing.md,
   },
   title: {
@@ -209,11 +209,11 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     paddingVertical: 16,
     borderRadius: radii.pill,
-    backgroundColor: colors.brand,
+    backgroundColor: colors.navy,
   },
   primaryText: {
     ...typography.heading,
-    color: colors.background,
+    color: colors.white,
   },
   secondary: {
     alignItems: "center",

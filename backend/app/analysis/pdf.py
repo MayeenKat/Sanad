@@ -13,6 +13,7 @@ from app.analysis.common import (
     parse_datetime,
     software_findings,
 )
+from app.analysis.licence import check_business_identifiers, extract_business_identifiers
 from app.models import DocumentReport, Finding, Severity
 
 _EOF = re.compile(rb"%%EOF")
@@ -117,6 +118,8 @@ def analyze_pdf(data: bytes, filename: str, mime_type: str) -> DocumentReport:
         except Exception:  # noqa: BLE001 - pypdf can fail on exotic fonts
             continue
     report.findings.extend(check_text_content(text))
+    report.business = extract_business_identifiers(text)
+    report.findings.extend(check_business_identifiers(report.business))
 
     if not text.strip() and pages:
         report.findings.append(

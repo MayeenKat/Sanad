@@ -43,9 +43,9 @@ export function CaptureTray({ documents, onRemove, onVerify }: CaptureTrayProps)
         onPress={onVerify}
         accessibilityRole="button"
       >
-        <Ionicons name="shield-checkmark" size={18} color={colors.background} />
+        <Ionicons name="shield-checkmark" size={18} color={colors.white} />
         <Text style={styles.verifyText}>{label}</Text>
-        <Ionicons name="arrow-forward" size={18} color={colors.background} />
+        <Ionicons name="arrow-forward" size={18} color={colors.white} />
       </Pressable>
     </View>
   );
@@ -70,7 +70,7 @@ const styles = StyleSheet.create({
     borderRadius: radii.sm,
     borderWidth: 2,
     borderColor: colors.brand,
-    backgroundColor: colors.surfaceRaised,
+    backgroundColor: colors.surface,
   },
   pdfThumb: {
     alignItems: "center",
@@ -106,13 +106,13 @@ const styles = StyleSheet.create({
     marginHorizontal: spacing.lg,
     paddingVertical: 14,
     borderRadius: radii.pill,
-    backgroundColor: colors.brand,
+    backgroundColor: colors.navy,
   },
   verifyPressed: {
     opacity: 0.85,
   },
   verifyText: {
     ...typography.heading,
-    color: colors.background,
+    color: colors.white,
   },
 });

@@ -3,15 +3,17 @@ import { CameraView, useCameraPermissions } from "expo-camera";
 import * as Haptics from "expo-haptics";
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, Alert, Animated, PanResponder, Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Animated, Image, PanResponder, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { CaptureTray } from "@/components/CaptureTray";
 import { UploadSheet } from "@/components/UploadSheet";
 import { pickFiles, pickFromLibrary } from "@/lib/pickers";
 import { newDocumentId, useScan } from "@/lib/scan-context";
-import { colors, radii, spacing, typography } from "@/lib/theme";
+import { colors, radii, shadow, spacing, typography } from "@/lib/theme";
 import type { ScanDocument } from "@/lib/types";
+
+const logo = require("../../assets/logo.png");
 
 const SWIPE_UP_DISTANCE = 70;
 const SWIPE_UP_VELOCITY = 0.35;
@@ -102,42 +104,41 @@ export default function CameraScreen() {
   const showCamera = permission?.granted === true;
 
   return (
-    <View style={styles.root}>
-      {showCamera ? (
-        <CameraView
-          ref={cameraRef}
-          style={StyleSheet.absoluteFill}
-          facing="back"
-          enableTorch={torch}
-          onCameraReady={() => setCameraReady(true)}
-        />
-      ) : (
-        <PermissionPlaceholder
-          status={permission?.status}
-          canAskAgain={permission?.canAskAgain ?? true}
-          onRequest={requestPermission}
-        />
-      )}
+    <View style={styles.root} {...panResponder.panHandlers}>
+      <View style={[styles.topBar, { paddingTop: insets.top + spacing.sm }]}>
+        <Image source={logo} style={styles.logo} resizeMode="contain" accessibilityLabel="SANAD" />
+        <Text style={styles.tagline}>Scan a document to check it&apos;s genuine</Text>
+      </View>
 
-      <Animated.View pointerEvents="none" style={[styles.flash, { opacity: flash }]} />
+      <View style={styles.viewfinder}>
+        {showCamera ? (
+          <CameraView
+            ref={cameraRef}
+            style={StyleSheet.absoluteFill}
+            facing="back"
+            enableTorch={torch}
+            onCameraReady={() => setCameraReady(true)}
+          />
+        ) : (
+          <PermissionPlaceholder
+            status={permission?.status}
+            canAskAgain={permission?.canAskAgain ?? true}
+            onRequest={requestPermission}
+          />
+        )}
 
-      <View style={styles.overlay} {...panResponder.panHandlers}>
-        <View style={[styles.topBar, { paddingTop: insets.top + spacing.sm }]}>
-          <View>
-            <Text style={styles.brand}>SANAD</Text>
-            <Text style={styles.tagline}>Scan a document to check it&apos;s genuine</Text>
-          </View>
-          {showCamera && (
-            <Pressable
-              onPress={() => setTorch((t) => !t)}
-              style={styles.iconButton}
-              accessibilityRole="button"
-              accessibilityLabel={torch ? "Turn torch off" : "Turn torch on"}
-            >
-              <Ionicons name={torch ? "flash" : "flash-off"} size={20} color={colors.white} />
-            </Pressable>
-          )}
-        </View>
+        <Animated.View pointerEvents="none" style={[styles.flash, { opacity: flash }]} />
+
+        {showCamera && (
+          <Pressable
+            onPress={() => setTorch((t) => !t)}
+            style={styles.torchButton}
+            accessibilityRole="button"
+            accessibilityLabel={torch ? "Turn torch off" : "Turn torch on"}
+          >
+            <Ionicons name={torch ? "flash" : "flash-off"} size={20} color={colors.white} />
+          </Pressable>
+        )}
 
         {showCamera && documents.length === 0 && (
           <View style={styles.frameWrap} pointerEvents="none">
@@ -150,44 +151,48 @@ export default function CameraScreen() {
             <Text style={styles.frameHint}>Fit the receipt or document inside the frame</Text>
           </View>
         )}
+      </View>
 
-        <View style={[styles.bottom, { paddingBottom: insets.bottom + spacing.md }]}>
+      <View style={[styles.bottom, { paddingBottom: insets.bottom + spacing.md }]}>
           <CaptureTray documents={documents} onRemove={removeDocument} onVerify={() => goVerify(documents)} />
 
-          <Pressable onPress={openSheet} style={styles.swipeHint} accessibilityLabel="Swipe up to upload">
-            <Ionicons name="chevron-up" size={18} color={colors.textMuted} />
-            <Text style={styles.swipeHintText}>Swipe up to upload a PDF or image</Text>
+        <Pressable onPress={openSheet} style={styles.swipeHint} accessibilityLabel="Swipe up to upload">
+          <Ionicons name="chevron-up" size={18} color={colors.brand} />
+          <Text style={styles.swipeHintText}>Swipe up to upload a PDF or image</Text>
+        </Pressable>
+
+        <View style={styles.controls}>
+          <Pressable
+            onPress={openSheet}
+            style={({ pressed }) => [styles.sideButton, pressed && styles.pressed]}
+            accessibilityRole="button"
+            accessibilityLabel="Upload a document"
+          >
+            <Ionicons name="attach" size={26} color={colors.navy} />
           </Pressable>
 
-          <View style={styles.controls}>
-            <Pressable
-              onPress={openSheet}
-              style={({ pressed }) => [styles.sideButton, pressed && styles.pressed]}
-              accessibilityRole="button"
-              accessibilityLabel="Upload a document"
-            >
-              <Ionicons name="attach" size={26} color={colors.white} />
-            </Pressable>
-
-            <Pressable
-              onPress={handleCapture}
-              disabled={!showCamera || !cameraReady || capturing}
-              style={({ pressed }) => [styles.shutterOuter, pressed && styles.shutterPressed, !showCamera && styles.disabled]}
-              accessibilityRole="button"
-              accessibilityLabel="Take photo"
-            >
-              <View style={styles.shutterInner}>
-                {capturing && <ActivityIndicator color={colors.background} />}
-              </View>
-            </Pressable>
-
-            <View style={styles.sideButtonGhost}>
-              {documents.length > 0 && (
-                <View style={styles.countBadge}>
-                  <Text style={styles.countText}>{documents.length}</Text>
-                </View>
+          <Pressable
+            onPress={handleCapture}
+            disabled={!showCamera || !cameraReady || capturing}
+            style={({ pressed }) => [styles.shutterOuter, pressed && styles.shutterPressed, !showCamera && styles.disabled]}
+            accessibilityRole="button"
+            accessibilityLabel="Take photo"
+          >
+            <View style={styles.shutterInner}>
+              {capturing ? (
+                <ActivityIndicator color={colors.white} />
+              ) : (
+                <Ionicons name="camera" size={28} color={colors.white} />
               )}
             </View>
+          </Pressable>
+
+          <View style={styles.sideButtonGhost}>
+            {documents.length > 0 && (
+              <View style={styles.countBadge}>
+                <Text style={styles.countText}>{documents.length}</Text>
+              </View>
+            )}
           </View>
         </View>
       </View>
@@ -239,6 +244,30 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
+  topBar: {
+    alignItems: "center",
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.sm,
+    gap: spacing.xs,
+  },
+  logo: {
+    width: 150,
+    height: 96,
+  },
+  tagline: {
+    ...typography.caption,
+    color: colors.textMuted,
+  },
+  viewfinder: {
+    flex: 1,
+    marginHorizontal: spacing.md,
+    borderRadius: radii.lg,
+    overflow: "hidden",
+    backgroundColor: colors.navyDark,
+    borderWidth: 1,
+    borderColor: colors.border,
+    ...shadow.card,
+  },
   flash: {
     position: "absolute",
     top: 0,
@@ -247,27 +276,10 @@ const styles = StyleSheet.create({
     bottom: 0,
     backgroundColor: colors.white,
   },
-  overlay: {
-    flex: 1,
-    justifyContent: "space-between",
-  },
-  topBar: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    justifyContent: "space-between",
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.md,
-  },
-  brand: {
-    ...typography.display,
-    color: colors.white,
-    letterSpacing: 4,
-  },
-  tagline: {
-    ...typography.caption,
-    color: colors.textMuted,
-  },
-  iconButton: {
+  torchButton: {
+    position: "absolute",
+    top: spacing.md,
+    right: spacing.md,
     width: 40,
     height: 40,
     borderRadius: radii.pill,
@@ -276,12 +288,19 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   frameWrap: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     alignItems: "center",
+    justifyContent: "center",
     gap: spacing.md,
   },
   frame: {
     width: "78%",
     aspectRatio: 0.72,
+    maxHeight: "70%",
   },
   corner: {
     position: "absolute",
@@ -323,9 +342,9 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: radii.pill,
-    backgroundColor: colors.overlay,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.25)",
+    borderColor: colors.border,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -346,7 +365,7 @@ const styles = StyleSheet.create({
   },
   countText: {
     ...typography.heading,
-    color: colors.background,
+    color: colors.white,
   },
   pressed: {
     opacity: 0.7,
@@ -359,7 +378,7 @@ const styles = StyleSheet.create({
     height: 84,
     borderRadius: radii.pill,
     borderWidth: 4,
-    borderColor: colors.white,
+    borderColor: colors.brand,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -370,7 +389,7 @@ const styles = StyleSheet.create({
     width: 66,
     height: 66,
     borderRadius: radii.pill,
-    backgroundColor: colors.white,
+    backgroundColor: colors.navy,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -380,6 +399,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingHorizontal: spacing.xl,
     gap: spacing.md,
+    backgroundColor: colors.surface,
   },
   permissionIcon: {
     width: 88,
@@ -404,10 +424,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
     paddingVertical: 14,
     borderRadius: radii.pill,
-    backgroundColor: colors.brand,
+    backgroundColor: colors.navy,
   },
   permissionButtonText: {
     ...typography.heading,
-    color: colors.background,
+    color: colors.white,
   },
 });

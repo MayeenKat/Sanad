@@ -6,6 +6,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { FindingCard } from "@/components/FindingCard";
+import { LicenceCheckCard } from "@/components/LicenceCheckCard";
 import { useScan } from "@/lib/scan-context";
 import { colors, radii, spacing, typography } from "@/lib/theme";
 import type { DocumentReport } from "@/lib/types";
@@ -66,13 +67,11 @@ export default function ResultScreen() {
         contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.lg }]}
         showsVerticalScrollIndicator={false}
       >
-        <View style={[styles.hero, { backgroundColor: fraud ? colors.dangerDark : colors.safeDark }]}>
-          <View style={[styles.heroIcon, { backgroundColor: tone }]}>
-            <Ionicons name={fraud ? "alert" : "checkmark"} size={54} color={colors.white} />
+        <View style={[styles.hero, { backgroundColor: tone }]}>
+          <View style={styles.heroIcon}>
+            <Ionicons name={fraud ? "alert" : "checkmark"} size={54} color={tone} />
           </View>
-          <Text style={[styles.label, { color: fraud ? "#FCA5A5" : "#86EFAC" }]}>
-            {fraud ? "Danger" : "Safe"}
-          </Text>
+          <Text style={styles.label}>{fraud ? "Danger" : "Safe"}</Text>
           <Text style={styles.heroTitle}>
             {fraud ? "Alert: This is a fraud document!" : "This is a real document, you can proceed"}
           </Text>
@@ -80,7 +79,7 @@ export default function ResultScreen() {
           <View style={styles.scoreRow}>
             <Text style={styles.scoreLabel}>Risk score</Text>
             <View style={styles.scoreTrack}>
-              <View style={[styles.scoreFill, { width: `${Math.max(4, result.risk_score)}%`, backgroundColor: tone }]} />
+              <View style={[styles.scoreFill, { width: `${Math.max(4, result.risk_score)}%` }]} />
             </View>
             <Text style={styles.scoreValue}>{result.risk_score}/100</Text>
           </View>
@@ -120,6 +119,16 @@ export default function ResultScreen() {
             )}
           </View>
         )}
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>{fraud ? "Is the issuer even licensed?" : "Next step: confirm the issuer"}</Text>
+          <Text style={styles.sectionBody}>
+            {fraud
+              ? "Scammers often print a made-up company or licence. Look it up in the official registry before reporting."
+              : "A clean file is not proof the seller is real. Confirm their trade licence in the official UAE registry before you pay or hand over goods."}
+          </Text>
+          <LicenceCheckCard business={result.business} />
+        </View>
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Document details</Text>
@@ -167,7 +176,7 @@ function DocumentDetails({ document }: { document: DocumentReport }) {
         <Ionicons
           name={document.kind === "pdf" ? "document-text-outline" : "image-outline"}
           size={20}
-          color={colors.brand}
+          color={colors.navy}
         />
         <View style={styles.docTitleWrap}>
           <Text style={styles.docTitle} numberOfLines={1}>
@@ -203,10 +212,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   rootFraud: {
-    backgroundColor: "#160B0C",
+    backgroundColor: "#FFF6F6",
   },
   rootSafe: {
-    backgroundColor: "#0A1510",
+    backgroundColor: "#F4FBF7",
   },
   content: {
     paddingHorizontal: spacing.lg,
@@ -224,12 +233,14 @@ const styles = StyleSheet.create({
     width: 96,
     height: 96,
     borderRadius: radii.pill,
+    backgroundColor: colors.white,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: spacing.sm,
   },
   label: {
     ...typography.label,
+    color: "rgba(255,255,255,0.85)",
   },
   heroTitle: {
     ...typography.display,
@@ -239,7 +250,7 @@ const styles = StyleSheet.create({
   },
   heroSummary: {
     ...typography.body,
-    color: "rgba(255,255,255,0.8)",
+    color: "rgba(255,255,255,0.9)",
     textAlign: "center",
   },
   scoreRow: {
@@ -251,18 +262,19 @@ const styles = StyleSheet.create({
   },
   scoreLabel: {
     ...typography.caption,
-    color: "rgba(255,255,255,0.7)",
+    color: "rgba(255,255,255,0.85)",
   },
   scoreTrack: {
     flex: 1,
     height: 8,
     borderRadius: radii.pill,
-    backgroundColor: "rgba(0,0,0,0.35)",
+    backgroundColor: "rgba(255,255,255,0.3)",
     overflow: "hidden",
   },
   scoreFill: {
     height: "100%",
     borderRadius: radii.pill,
+    backgroundColor: colors.white,
   },
   scoreValue: {
     ...typography.caption,
@@ -288,7 +300,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     padding: spacing.md,
     borderRadius: radii.md,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.white,
     borderWidth: 1,
     borderColor: colors.border,
   },
@@ -304,7 +316,7 @@ const styles = StyleSheet.create({
   },
   doc: {
     borderRadius: radii.md,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.white,
     borderWidth: 1,
     borderColor: colors.border,
     overflow: "hidden",
@@ -355,7 +367,8 @@ const styles = StyleSheet.create({
     paddingTop: spacing.md,
     gap: spacing.xs,
     borderTopWidth: 1,
-    borderTopColor: "rgba(255,255,255,0.06)",
+    borderTopColor: colors.border,
+    backgroundColor: colors.background,
   },
   cta: {
     flexDirection: "row",

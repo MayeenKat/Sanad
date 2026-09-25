@@ -25,9 +25,24 @@ Sanad/
      findings, then a **How to proceed** button with step-by-step instructions to report through
      TAMM / Abu Dhabi Police.
    - **Authentic** → green screen: *"This is a real document, you can proceed"* and **Done**.
+4. **Check the issuer's UAE licence** — both result screens show a *Check the issuer's UAE licence*
+   card. The backend extracts the trade name, trade-licence number and TRN printed in the document
+   (and flags TRNs that don't match the 15-digit FTA format); the card lets you copy each value and
+   opens the official, UAE-wide **National Economic Registry** licence inquiry
+   (`growth.gov.ae`, Ministry of Economy & Tourism — covers every emirate and free zone) as listed on
+   [u.ae → Inquire about licences, names and activities](https://u.ae/en/information-and-services/business/important-digital-services/inquire-about-licences-names-and-activities).
+   TRNs link to the Federal Tax Authority's TRN Verification box on tax.gov.ae.
 
-> "Authentic" means no signs of editing or tampering were detected. SANAD does not yet query an
-> official issuer registry, so treat the green result as a strong signal, not a guarantee.
+> "Authentic" means no signs of editing or tampering were detected. The official registries require
+> UAE PASS sign-in and expose no public API, so SANAD hands you off to them rather than pretending to
+> have verified the licence itself — treat the green result as a strong signal, not a guarantee.
+
+## Design
+
+White background with the palette taken from the SANAD logo: navy `#0A2E52` (primary actions,
+viewfinder), gold `#C8985A` (accents, shutter ring), slate text `#0F2A47`. Red `#D6363C` and green
+`#1F9D5A` are reserved for the fraud / authentic verdicts. Tokens live in `mobile/src/lib/theme.ts`;
+icon, adaptive icon, splash and in-app logo assets in `mobile/assets/`.
 
 ## Running locally
 
@@ -52,3 +67,18 @@ npx expo lint && npx tsc --noEmit
 ```
 
 The Android emulator reaches the host backend via `http://10.0.2.2:8000` automatically.
+
+### Android build (APK)
+
+The app uses native modules (camera, pickers), so it needs a development/preview build rather than
+Expo Go. With an Expo account:
+
+```bash
+cd mobile
+npx eas-cli@latest login
+npx eas-cli@latest build --platform android --profile preview   # produces an installable .apk
+```
+
+The `preview` profile in `mobile/eas.json` builds an APK (internal distribution); `production`
+builds an AAB for the Play Store. Set `EXPO_PUBLIC_API_URL` in `eas.json` → `env` (or `.env`) to a
+backend URL reachable from the phone.

@@ -9,7 +9,7 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <ScanProvider>
-        <StatusBar style="light" />
+        <StatusBar style="dark" />
         <Stack
           screenOptions={{
             headerShown: false,

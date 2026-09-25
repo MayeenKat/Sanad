@@ -106,7 +106,7 @@ export default function ReportScreen() {
             onPress={() => open(TAMM_POLICE_URL, `Visit ${TAMM_URL} in your browser.`)}
             accessibilityRole="link"
           >
-            <Ionicons name="open-outline" size={20} color={colors.background} />
+            <Ionicons name="open-outline" size={20} color={colors.white} />
             <Text style={styles.primaryText}>Open TAMM to report</Text>
           </Pressable>
           <Pressable
@@ -236,11 +236,11 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     paddingVertical: 16,
     borderRadius: radii.pill,
-    backgroundColor: colors.brand,
+    backgroundColor: colors.navy,
   },
   primaryText: {
     ...typography.heading,
-    color: colors.background,
+    color: colors.white,
   },
   outline: {
     flexDirection: "row",
@@ -280,7 +280,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 16,
     borderRadius: radii.pill,
-    backgroundColor: colors.surfaceRaised,
+    backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
   },

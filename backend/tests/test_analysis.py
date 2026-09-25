@@ -6,6 +6,7 @@ from fastapi.testclient import TestClient
 
 from app.analysis.common import check_text_content
 from app.analysis.engine import aggregate, analyze_document
+from app.analysis.licence import check_business_identifiers, extract_business_identifiers
 from app.main import app
 from tests.fixtures import add_incremental_update, make_jpeg, make_pdf, make_png
 
@@ -127,6 +128,31 @@ def test_future_date_in_text():
     findings = check_text_content("Paid on 31/12/2030", now=NOW)
     assert findings[0].code == "future_date_in_text"
     assert check_text_content("Paid on 01/03/2024", now=NOW) == []
+
+
+# --- business identifiers ------------------------------------------------
+
+
+def test_extracts_licence_and_trn():
+    text = "Trade Name: Al Noor Trading LLC\nTrade Licence No: CN-1234567\nTRN: 100 2345 6789 0003"
+    ids = extract_business_identifiers(text)
+    assert ids.licence_numbers == ["CN-1234567"]
+    assert ids.tax_registration_numbers == ["100234567890003"]
+    assert ids.trade_name == "Al Noor Trading LLC"
+    assert check_business_identifiers(ids) == []
+
+
+def test_invalid_trn_flagged():
+    ids = extract_business_identifiers("TRN 123456789")
+    findings = check_business_identifiers(ids)
+    assert findings and findings[0].code == "invalid_trn"
+
+
+def test_pdf_report_carries_business_identifiers():
+    pdf = make_pdf("Tax Invoice\nLicense No. 987654\nTRN: 100987654321003")
+    result = aggregate([analyze_document(pdf, "invoice.pdf", "application/pdf")])
+    assert result.business.licence_numbers == ["987654"]
+    assert result.business.tax_registration_numbers == ["100987654321003"]
 
 
 # --- api -------------------------------------------------------------------
