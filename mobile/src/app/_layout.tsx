@@ -21,6 +21,7 @@ export default function RootLayout() {
           <Stack.Screen name="analyzing" options={{ animation: "fade", gestureEnabled: false }} />
           <Stack.Screen name="result" options={{ animation: "fade", gestureEnabled: false }} />
           <Stack.Screen name="report" />
+          <Stack.Screen name="settings" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
         </Stack>
       </ScanProvider>
     </SafeAreaProvider>

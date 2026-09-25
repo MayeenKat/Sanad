@@ -52,7 +52,7 @@ icon, adaptive icon, splash and in-app logo assets in `mobile/assets/`.
 cd backend
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements-dev.txt
-uvicorn app.main:app --reload --port 8000   # http://localhost:8000/docs
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000   # http://localhost:8000/docs
 pytest -q && ruff check .
 ```
 
@@ -66,7 +66,17 @@ npx expo start           # press i / a for a simulator, or scan the QR code with
 npx expo lint && npx tsc --noEmit
 ```
 
-The Android emulator reaches the host backend via `http://10.0.2.2:8000` automatically.
+The Android emulator reaches the host backend via `http://10.0.2.2:8000` automatically. On a physical
+phone, tap the gear icon on the camera screen (or **Change server address** on the error screen) and
+enter your computer's Wi-Fi IP, e.g. `192.168.1.20:8000`; **Test connection** pings `/health`. The
+phone and computer must be on the same network and port 8000 must be allowed through the firewall.
+Requests time out after 30 seconds instead of spinning forever.
+
+### Trying it out
+
+`samples/` contains fictional documents: `real/` should come back green and `fake/` red
+(see `samples/README.md`). Upload one file at a time — multiple files are analysed together as pages
+of a single document and get one combined verdict.
 
 ### Android build (APK)
 

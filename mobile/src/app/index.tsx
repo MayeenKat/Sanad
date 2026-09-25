@@ -108,6 +108,15 @@ export default function CameraScreen() {
       <View style={[styles.topBar, { paddingTop: insets.top + spacing.sm }]}>
         <Image source={logo} style={styles.logo} resizeMode="contain" accessibilityLabel="SANAD" />
         <Text style={styles.tagline}>Scan a document to check it&apos;s genuine</Text>
+        <Pressable
+          onPress={() => router.push("/settings")}
+          style={[styles.settingsButton, { top: insets.top + spacing.sm }]}
+          accessibilityRole="button"
+          accessibilityLabel="Verification server settings"
+          hitSlop={8}
+        >
+          <Ionicons name="settings-outline" size={22} color={colors.navy} />
+        </Pressable>
       </View>
 
       <View style={styles.viewfinder}>
@@ -257,6 +266,16 @@ const styles = StyleSheet.create({
   tagline: {
     ...typography.caption,
     color: colors.textMuted,
+  },
+  settingsButton: {
+    position: "absolute",
+    right: spacing.lg,
+    width: 40,
+    height: 40,
+    borderRadius: radii.pill,
+    backgroundColor: colors.surface,
+    alignItems: "center",
+    justifyContent: "center",
   },
   viewfinder: {
     flex: 1,

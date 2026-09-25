@@ -70,6 +70,7 @@ export default function AnalyzingScreen() {
     setAttempt((a) => a + 1);
   }, []);
   const goBack = useCallback(() => router.replace("/"), []);
+  const openSettings = useCallback(() => router.push("/settings"), []);
 
   const scale = pulse.interpolate({ inputRange: [0, 1], outputRange: [1, 1.12] });
   const opacity = pulse.interpolate({ inputRange: [0, 1], outputRange: [0.35, 0.05] });
@@ -87,6 +88,10 @@ export default function AnalyzingScreen() {
             <Pressable style={styles.primary} onPress={retry} accessibilityRole="button">
               <Ionicons name="refresh" size={18} color={colors.white} />
               <Text style={styles.primaryText}>Try again</Text>
+            </Pressable>
+            <Pressable style={styles.outline} onPress={openSettings} accessibilityRole="button">
+              <Ionicons name="settings-outline" size={18} color={colors.navy} />
+              <Text style={styles.outlineText}>Change server address</Text>
             </Pressable>
             <Pressable style={styles.secondary} onPress={goBack} accessibilityRole="button">
               <Text style={styles.secondaryText}>Back to camera</Text>
@@ -214,6 +219,20 @@ const styles = StyleSheet.create({
   primaryText: {
     ...typography.heading,
     color: colors.white,
+  },
+  outline: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: spacing.sm,
+    paddingVertical: 14,
+    borderRadius: radii.pill,
+    borderWidth: 1.5,
+    borderColor: colors.navy,
+  },
+  outlineText: {
+    ...typography.heading,
+    color: colors.navy,
   },
   secondary: {
     alignItems: "center",

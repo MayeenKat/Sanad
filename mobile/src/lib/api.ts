@@ -1,14 +1,10 @@
 import { File as LocalFile } from "expo-file-system";
 import { Platform } from "react-native";
 
+import { getApiUrl } from "./server";
 import type { AnalysisResult, ScanDocument } from "./types";
 
-const DEFAULT_API_URL = Platform.select({
-  android: "http://10.0.2.2:8000",
-  default: "http://localhost:8000",
-});
-
-export const API_URL = (process.env.EXPO_PUBLIC_API_URL ?? DEFAULT_API_URL).replace(/\/$/, "");
+const REQUEST_TIMEOUT_MS = 30_000;
 
 export class ApiError extends Error {
   constructor(
@@ -37,20 +33,39 @@ export async function analyzeDocuments(
   documents: ScanDocument[],
   signal?: AbortSignal,
 ): Promise<AnalysisResult> {
+  const apiUrl = await getApiUrl();
   const form = new FormData();
   for (const doc of documents) {
     await appendDocument(form, doc);
   }
 
+  const controller = new AbortController();
+  let timedOut = false;
+  const timer = setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, REQUEST_TIMEOUT_MS);
+  const onOuterAbort = () => controller.abort();
+  signal?.addEventListener("abort", onOuterAbort);
+
   let response: Response;
   try {
-    response = await fetch(`${API_URL}/analyze`, { method: "POST", body: form, signal });
+    response = await fetch(`${apiUrl}/analyze`, { method: "POST", body: form, signal: controller.signal });
   } catch (error) {
-    if (error instanceof Error && error.name === "AbortError") throw error;
+    if (timedOut) {
+      throw new ApiError(
+        `The SANAD verification service at ${apiUrl} did not respond within ${REQUEST_TIMEOUT_MS / 1000} seconds. ` +
+          "Make sure the backend is running and that the server address points to it.",
+      );
+    }
+    if (signal?.aborted || (error instanceof Error && error.name === "AbortError")) throw error;
     const reason = error instanceof Error && error.message ? ` (${error.message})` : "";
     throw new ApiError(
-      `Could not reach the SANAD verification service at ${API_URL}. Check your connection and try again.${reason}`,
+      `Could not reach the SANAD verification service at ${apiUrl}. Check your connection and the server address.${reason}`,
     );
+  } finally {
+    clearTimeout(timer);
+    signal?.removeEventListener("abort", onOuterAbort);
   }
 
   if (!response.ok) {
