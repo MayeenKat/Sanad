@@ -2,6 +2,11 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Platform } from "react-native";
 
 const STORAGE_KEY = "sanad.apiUrl";
+const MODE_KEY = "sanad.analysisMode";
+
+/** `device`: analyse on this phone (default). `server`: send files to a SANAD backend. */
+export type AnalysisMode = "device" | "server";
+export const DEFAULT_ANALYSIS_MODE: AnalysisMode = "device";
 
 const BUILT_IN_API_URL = Platform.select({
   android: "http://10.0.2.2:8000",
@@ -11,6 +16,24 @@ const BUILT_IN_API_URL = Platform.select({
 export const DEFAULT_API_URL = normalizeApiUrl(process.env.EXPO_PUBLIC_API_URL ?? BUILT_IN_API_URL) ?? BUILT_IN_API_URL;
 
 let cached: string | null = null;
+let cachedMode: AnalysisMode | null = null;
+
+export async function getAnalysisMode(): Promise<AnalysisMode> {
+  if (cachedMode) return cachedMode;
+  try {
+    const stored = await AsyncStorage.getItem(MODE_KEY);
+    cachedMode = stored === "server" ? "server" : DEFAULT_ANALYSIS_MODE;
+  } catch {
+    cachedMode = DEFAULT_ANALYSIS_MODE;
+  }
+  return cachedMode;
+}
+
+export async function setAnalysisMode(mode: AnalysisMode): Promise<void> {
+  cachedMode = mode;
+  if (mode === DEFAULT_ANALYSIS_MODE) await AsyncStorage.removeItem(MODE_KEY);
+  else await AsyncStorage.setItem(MODE_KEY, mode);
+}
 
 export function normalizeApiUrl(value: string | null | undefined): string | null {
   const trimmed = value?.trim();
@@ -51,7 +74,9 @@ export async function pingApi(baseUrl: string, timeoutMs = 5000): Promise<boolea
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const response = await fetch(`${baseUrl}/health`, { signal: controller.signal });
+    const response = await fetch(`${baseUrl}/health`, {
+      signal: controller.signal,
+    });
     return response.ok;
   } catch {
     return false;

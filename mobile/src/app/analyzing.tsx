@@ -80,7 +80,7 @@ export default function AnalyzingScreen() {
       {error ? (
         <View style={styles.center}>
           <View style={[styles.iconWrap, styles.iconWrapError]}>
-            <Ionicons name="cloud-offline-outline" size={44} color={colors.warning} />
+            <Ionicons name="alert-circle-outline" size={44} color={colors.warning} />
           </View>
           <Text style={styles.title}>Verification unavailable</Text>
           <Text style={styles.body}>{error}</Text>
@@ -91,7 +91,7 @@ export default function AnalyzingScreen() {
             </Pressable>
             <Pressable style={styles.outline} onPress={openSettings} accessibilityRole="button">
               <Ionicons name="settings-outline" size={18} color={colors.navy} />
-              <Text style={styles.outlineText}>Change server address</Text>
+              <Text style={styles.outlineText}>Verification settings</Text>
             </Pressable>
             <Pressable style={styles.secondary} onPress={goBack} accessibilityRole="button">
               <Text style={styles.secondaryText}>Back to camera</Text>

@@ -112,7 +112,7 @@ export default function CameraScreen() {
           onPress={() => router.push("/settings")}
           style={[styles.settingsButton, { top: insets.top + spacing.sm }]}
           accessibilityRole="button"
-          accessibilityLabel="Verification server settings"
+          accessibilityLabel="Verification settings"
           hitSlop={8}
         >
           <Ionicons name="settings-outline" size={22} color={colors.navy} />

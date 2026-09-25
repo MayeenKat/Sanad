@@ -14,25 +14,37 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { DEFAULT_API_URL, getApiUrl, normalizeApiUrl, pingApi, setApiUrl } from "@/lib/server";
+import {
+  type AnalysisMode,
+  DEFAULT_API_URL,
+  getAnalysisMode,
+  getApiUrl,
+  normalizeApiUrl,
+  pingApi,
+  setAnalysisMode,
+  setApiUrl,
+} from "@/lib/server";
 import { colors, radii, spacing, typography } from "@/lib/theme";
 
 type Status = { kind: "idle" } | { kind: "testing" } | { kind: "ok"; url: string } | { kind: "fail"; url: string };
 
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
+  const [mode, setMode] = useState<AnalysisMode>("device");
   const [value, setValue] = useState("");
   const [loaded, setLoaded] = useState(false);
   const [status, setStatus] = useState<Status>({ kind: "idle" });
 
   useEffect(() => {
-    getApiUrl().then((url) => {
+    Promise.all([getAnalysisMode(), getApiUrl()]).then(([storedMode, url]) => {
+      setMode(storedMode);
       setValue(url);
       setLoaded(true);
     });
   }, []);
 
   const normalized = normalizeApiUrl(value);
+  const canSave = mode === "device" || Boolean(normalized);
 
   const test = useCallback(async () => {
     if (!normalized) return;
@@ -42,11 +54,14 @@ export default function SettingsScreen() {
   }, [normalized]);
 
   const save = useCallback(async () => {
-    const saved = await setApiUrl(value);
-    setValue(saved);
+    await setAnalysisMode(mode);
+    if (mode === "server") {
+      const saved = await setApiUrl(value);
+      setValue(saved);
+    }
     if (router.canGoBack()) router.back();
     else router.replace("/");
-  }, [value]);
+  }, [mode, value]);
 
   const resetDefault = useCallback(() => {
     setValue(DEFAULT_API_URL);
@@ -63,7 +78,10 @@ export default function SettingsScreen() {
       <ScrollView
         contentContainerStyle={[
           styles.content,
-          { paddingTop: insets.top + spacing.md, paddingBottom: insets.bottom + spacing.xl },
+          {
+            paddingTop: insets.top + spacing.md,
+            paddingBottom: insets.bottom + spacing.xl,
+          },
         ]}
         keyboardShouldPersistTaps="handled"
       >
@@ -71,95 +89,149 @@ export default function SettingsScreen() {
           <Pressable onPress={close} style={styles.iconButton} accessibilityRole="button" accessibilityLabel="Close">
             <Ionicons name="close" size={22} color={colors.text} />
           </Pressable>
-          <Text style={styles.title}>Verification server</Text>
+          <Text style={styles.title}>Verification settings</Text>
         </View>
 
-        <Text style={styles.body}>
-          SANAD sends documents to its own verification service for analysis. Enter the address of the computer
-          running the backend so this device can reach it.
-        </Text>
-
-        <Text style={styles.label}>Server address</Text>
-        <TextInput
-          value={value}
-          onChangeText={(text) => {
-            setValue(text);
-            setStatus({ kind: "idle" });
-          }}
-          editable={loaded}
-          autoCapitalize="none"
-          autoCorrect={false}
-          keyboardType="url"
-          placeholder="http://192.168.1.20:8000"
-          placeholderTextColor={colors.textMuted}
-          style={[styles.input, !normalized && value.length > 0 && styles.inputInvalid]}
-          accessibilityLabel="Server address"
+        <Text style={styles.label}>Where documents are analysed</Text>
+        <ModeOption
+          icon="phone-portrait-outline"
+          title="On this phone"
+          detail="Recommended. Documents never leave the device and no internet connection is needed."
+          selected={mode === "device"}
+          onPress={() => setMode("device")}
         />
-        {!normalized && value.length > 0 && <Text style={styles.error}>Enter a valid address, e.g. 192.168.1.20:8000</Text>}
+        <ModeOption
+          icon="server-outline"
+          title="SANAD server"
+          detail="For developers: send files to a computer running the SANAD backend."
+          selected={mode === "server"}
+          onPress={() => setMode("server")}
+        />
 
-        <View style={styles.row}>
-          <Pressable
-            onPress={test}
-            disabled={!normalized || status.kind === "testing"}
-            style={[styles.secondary, (!normalized || status.kind === "testing") && styles.disabled]}
-            accessibilityRole="button"
-          >
-            {status.kind === "testing" ? (
-              <ActivityIndicator size="small" color={colors.navy} />
-            ) : (
-              <Ionicons name="pulse-outline" size={18} color={colors.navy} />
+        {mode === "server" && (
+          <>
+            <Text style={styles.label}>Server address</Text>
+            <TextInput
+              value={value}
+              onChangeText={(text) => {
+                setValue(text);
+                setStatus({ kind: "idle" });
+              }}
+              editable={loaded}
+              autoCapitalize="none"
+              autoCorrect={false}
+              keyboardType="url"
+              placeholder="http://192.168.1.20:8000"
+              placeholderTextColor={colors.textMuted}
+              style={[styles.input, !normalized && value.length > 0 && styles.inputInvalid]}
+              accessibilityLabel="Server address"
+            />
+            {!normalized && value.length > 0 && (
+              <Text style={styles.error}>Enter a valid address, e.g. 192.168.1.20:8000</Text>
             )}
-            <Text style={styles.secondaryText}>Test connection</Text>
-          </Pressable>
-          <Pressable onPress={resetDefault} style={styles.link} accessibilityRole="button">
-            <Text style={styles.linkText}>Use default</Text>
-          </Pressable>
-        </View>
 
-        {status.kind === "ok" && (
-          <View style={[styles.statusBox, styles.statusOk]}>
-            <Ionicons name="checkmark-circle" size={20} color={colors.safe} />
-            <Text style={[styles.statusText, { color: colors.safeDark }]}>Connected to {status.url}</Text>
-          </View>
-        )}
-        {status.kind === "fail" && (
-          <View style={[styles.statusBox, styles.statusFail]}>
-            <Ionicons name="alert-circle" size={20} color={colors.danger} />
-            <Text style={[styles.statusText, { color: colors.dangerDark }]}>
-              No response from {status.url}. Check the steps below.
-            </Text>
-          </View>
-        )}
+            <View style={styles.row}>
+              <Pressable
+                onPress={test}
+                disabled={!normalized || status.kind === "testing"}
+                style={[styles.secondary, (!normalized || status.kind === "testing") && styles.disabled]}
+                accessibilityRole="button"
+              >
+                {status.kind === "testing" ? (
+                  <ActivityIndicator size="small" color={colors.navy} />
+                ) : (
+                  <Ionicons name="pulse-outline" size={18} color={colors.navy} />
+                )}
+                <Text style={styles.secondaryText}>Test connection</Text>
+              </Pressable>
+              <Pressable onPress={resetDefault} style={styles.link} accessibilityRole="button">
+                <Text style={styles.linkText}>Use default</Text>
+              </Pressable>
+            </View>
 
-        <View style={styles.help}>
-          <Text style={styles.helpTitle}>How to find the address</Text>
-          <HelpRow
-            icon="laptop-outline"
-            text="On the computer, start the backend: cd backend && uvicorn app.main:app --host 0.0.0.0 --port 8000"
-          />
-          <HelpRow
-            icon="wifi-outline"
-            text="Connect the phone and the computer to the same Wi-Fi, then use the computer's Wi-Fi IP address, e.g. 192.168.1.20:8000."
-          />
-          <HelpRow
-            icon="phone-portrait-outline"
-            text="On an Android emulator the computer is reachable as 10.0.2.2:8000 (the default). Expo web uses localhost:8000."
-          />
-          <HelpRow icon="shield-checkmark-outline" text="If it still fails, allow port 8000 through the computer's firewall." />
-        </View>
+            {status.kind === "ok" && (
+              <View style={[styles.statusBox, styles.statusOk]}>
+                <Ionicons name="checkmark-circle" size={20} color={colors.safe} />
+                <Text style={[styles.statusText, { color: colors.safeDark }]}>Connected to {status.url}</Text>
+              </View>
+            )}
+            {status.kind === "fail" && (
+              <View style={[styles.statusBox, styles.statusFail]}>
+                <Ionicons name="alert-circle" size={20} color={colors.danger} />
+                <Text style={[styles.statusText, { color: colors.dangerDark }]}>
+                  No response from {status.url}. Check the steps below.
+                </Text>
+              </View>
+            )}
+
+            <View style={styles.help}>
+              <Text style={styles.helpTitle}>How to find the address</Text>
+              <HelpRow
+                icon="laptop-outline"
+                text="On the computer, start the backend: cd backend && uvicorn app.main:app --host 0.0.0.0 --port 8000"
+              />
+              <HelpRow
+                icon="wifi-outline"
+                text="Connect the phone and the computer to the same Wi-Fi, then use the computer's Wi-Fi IP address, e.g. 192.168.1.20:8000."
+              />
+              <HelpRow
+                icon="phone-portrait-outline"
+                text="On an Android emulator the computer is reachable as 10.0.2.2:8000 (the default). Expo web uses localhost:8000."
+              />
+              <HelpRow
+                icon="shield-checkmark-outline"
+                text="If it still fails, allow port 8000 through the computer's firewall."
+              />
+            </View>
+          </>
+        )}
       </ScrollView>
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.md }]}>
         <Pressable
           onPress={save}
-          disabled={!normalized}
-          style={[styles.primary, !normalized && styles.disabled]}
+          disabled={!canSave || !loaded}
+          style={[styles.primary, (!canSave || !loaded) && styles.disabled]}
           accessibilityRole="button"
         >
           <Text style={styles.primaryText}>Save</Text>
         </Pressable>
       </View>
     </KeyboardAvoidingView>
+  );
+}
+
+function ModeOption({
+  icon,
+  title,
+  detail,
+  selected,
+  onPress,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  title: string;
+  detail: string;
+  selected: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      style={[styles.option, selected && styles.optionSelected]}
+      accessibilityRole="radio"
+      accessibilityState={{ selected }}
+    >
+      <Ionicons name={icon} size={22} color={selected ? colors.navy : colors.textMuted} />
+      <View style={styles.optionBody}>
+        <Text style={[styles.optionTitle, selected && { color: colors.navy }]}>{title}</Text>
+        <Text style={styles.optionDetail}>{detail}</Text>
+      </View>
+      <Ionicons
+        name={selected ? "radio-button-on" : "radio-button-off"}
+        size={22}
+        color={selected ? colors.brandDark : colors.border}
+      />
+    </Pressable>
   );
 }
 
@@ -206,6 +278,33 @@ const styles = StyleSheet.create({
     ...typography.label,
     color: colors.textMuted,
     marginTop: spacing.sm,
+  },
+  option: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
+    padding: spacing.md,
+    borderRadius: radii.lg,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+  },
+  optionSelected: {
+    borderColor: colors.navy,
+    backgroundColor: colors.white,
+  },
+  optionBody: {
+    flex: 1,
+    gap: 2,
+  },
+  optionTitle: {
+    ...typography.heading,
+    fontSize: 15,
+    color: colors.text,
+  },
+  optionDetail: {
+    ...typography.caption,
+    color: colors.textMuted,
   },
   input: {
     ...typography.body,

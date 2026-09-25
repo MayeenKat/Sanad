@@ -8,25 +8,31 @@ you whether it is genuine or fraudulent, explains why, and guides you to report 
 
 ```
 Sanad/
-├── mobile/    Expo (React Native) app — camera-first scanner UI
-└── backend/   FastAPI service — document & metadata fraud analysis
+├── mobile/    Expo (React Native) app — camera-first scanner UI + on-device analysis engine
+├── backend/   FastAPI service — the same analysis, optional (server mode / reference implementation)
+└── samples/   fictional real & fake documents for testing
 ```
+
+The app is self-contained: analysis runs on the phone (`mobile/src/lib/analysis/`), so the APK works
+without a server or an internet connection. The Python backend implements the same checks and is only
+used when **SANAD server** mode is selected in the app's settings.
 
 ## How it works
 
 1. **Scan** — the app opens straight into the camera. Take one or more photos of the document,
    or swipe up / tap the attachment button to upload PDFs, PNGs or JPEGs from your library or files.
-2. **Analyze** — the backend inspects the document's content *and* metadata: producer/creator and
-   editing-software fingerprints (Photoshop, Canva, iLovePDF, Word …), EXIF/XMP edit history,
-   incremental PDF updates, overlay/redaction annotations, broken digital signatures, JPEG
-   error-level analysis, and content checks (Emirates ID checksum, IBAN checksum, future dates).
+2. **Analyze** — the app inspects the document's content *and* metadata on the device: producer/creator
+   and editing-software fingerprints (Photoshop, Canva, iLovePDF, Word …), EXIF/XMP edit history and
+   Photoshop resource blocks, incremental PDF updates, overlay/redaction annotations, broken digital
+   signatures, and content checks on the extracted PDF text (Emirates ID checksum, IBAN checksum,
+   TRN format, future dates). The optional backend adds JPEG error-level analysis.
 3. **Verdict**
    - **Fraud** → red screen: *"Alert: This is a fraud document!"*, a risk score and the list of
      findings, then a **How to proceed** button with step-by-step instructions to report through
      TAMM / Abu Dhabi Police.
    - **Authentic** → green screen: *"This is a real document, you can proceed"* and **Done**.
 4. **Check the issuer's UAE licence** — both result screens show a *Check the issuer's UAE licence*
-   card. The backend extracts the trade name, trade-licence number and TRN printed in the document
+   card. The app extracts the trade name, trade-licence number and TRN printed in the document
    (and flags TRNs that don't match the 15-digit FTA format); the card lets you copy each value and
    opens the official, UAE-wide **National Economic Registry** licence inquiry
    (`growth.gov.ae`, Ministry of Economy & Tourism — covers every emirate and free zone) as listed on
@@ -46,7 +52,7 @@ icon, adaptive icon, splash and in-app logo assets in `mobile/assets/`.
 
 ## Running locally
 
-### Backend
+### Backend (optional)
 
 ```bash
 cd backend
@@ -61,16 +67,16 @@ pytest -q && ruff check .
 ```bash
 cd mobile
 npm install
-cp .env.example .env     # set EXPO_PUBLIC_API_URL to your machine's LAN IP for a physical device
 npx expo start           # press i / a for a simulator, or scan the QR code with Expo Go
 npx expo lint && npx tsc --noEmit
+npm run test:samples     # runs the on-device engine over samples/ in Node and checks every verdict
 ```
 
-The Android emulator reaches the host backend via `http://10.0.2.2:8000` automatically. On a physical
-phone, tap the gear icon on the camera screen (or **Change server address** on the error screen) and
-enter your computer's Wi-Fi IP, e.g. `192.168.1.20:8000`; **Test connection** pings `/health`. The
-phone and computer must be on the same network and port 8000 must be allowed through the firewall.
-Requests time out after 30 seconds instead of spinning forever.
+By default documents are analysed **on this phone** — nothing to configure. Developers can switch to
+**SANAD server** mode from the gear icon on the camera screen (or **Verification settings** on the
+error screen): enter the computer's Wi-Fi IP, e.g. `192.168.1.20:8000` (`10.0.2.2:8000` on the Android
+emulator; `EXPO_PUBLIC_API_URL` sets the default), and **Test connection** pings `/health`. Requests
+time out after 30 seconds.
 
 ### Trying it out
 
@@ -90,15 +96,15 @@ npx eas-cli@latest build --platform android --profile preview   # produces an in
 ```
 
 The `preview` profile in `mobile/eas.json` builds an APK (internal distribution); `production`
-builds an AAB for the Play Store. Set `EXPO_PUBLIC_API_URL` in `eas.json` → `env` (or `.env`) to a
-backend URL reachable from the phone. Plain `http://` backends work because `expo-build-properties`
-enables `usesCleartextTraffic` for Android; use HTTPS for a production backend.
+builds an AAB for the Play Store. The APK needs no backend. If you want server mode to default to a
+specific backend, set `EXPO_PUBLIC_API_URL` in `eas.json` → `env` (or `.env`); plain `http://` works
+because `expo-build-properties` enables `usesCleartextTraffic` for Android.
 
 Without an Expo account you can build locally (needs the Android SDK / JDK 17):
 
 ```bash
 cd mobile
 npx expo prebuild --platform android
-EXPO_PUBLIC_API_URL=http://10.0.2.2:8000 ./android/gradlew -p android :app:assembleRelease
+./android/gradlew -p android :app:assembleRelease
 # -> android/app/build/outputs/apk/release/app-release.apk (debug-signed)
 ```

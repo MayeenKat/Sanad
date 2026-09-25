@@ -1,8 +1,9 @@
 import { File as LocalFile } from "expo-file-system";
 import { Platform } from "react-native";
 
-import { getApiUrl } from "./server";
-import type { AnalysisResult, ScanDocument } from "./types";
+import { aggregate, analyzeDocument } from "./analysis/engine";
+import { getAnalysisMode, getApiUrl } from "./server";
+import type { AnalysisResult, DocumentReport, ScanDocument } from "./types";
 
 const REQUEST_TIMEOUT_MS = 30_000;
 
@@ -25,11 +26,57 @@ async function appendDocument(form: FormData, doc: ScanDocument): Promise<void> 
   // Expo's fetch serialises multipart parts itself and only accepts Blob-like values
   // (anything exposing `bytes()`), not React Native's legacy `{ uri }` descriptors.
   const file = new LocalFile(doc.uri);
-  const part = { name: doc.name, type: doc.mimeType, bytes: () => file.bytes() };
+  const part = {
+    name: doc.name,
+    type: doc.mimeType,
+    bytes: () => file.bytes(),
+  };
   form.append("files", part as unknown as Blob);
 }
 
-export async function analyzeDocuments(
+async function readBytes(doc: ScanDocument): Promise<Uint8Array> {
+  if (Platform.OS === "web") {
+    return new Uint8Array(await (await fetch(doc.uri)).arrayBuffer());
+  }
+  return new LocalFile(doc.uri).bytes();
+}
+
+/** Runs the full analysis on this device; no network access is needed. */
+export async function analyzeDocumentsLocally(
+  documents: ScanDocument[],
+  signal?: AbortSignal,
+): Promise<AnalysisResult> {
+  const reports: DocumentReport[] = [];
+  for (const doc of documents) {
+    if (signal?.aborted) {
+      const aborted = new Error("Aborted");
+      aborted.name = "AbortError";
+      throw aborted;
+    }
+    let data: Uint8Array;
+    try {
+      data = await readBytes(doc);
+    } catch (error) {
+      const reason = error instanceof Error && error.message ? ` (${error.message})` : "";
+      throw new ApiError(`Could not read '${doc.name}' from this device.${reason}`);
+    }
+    try {
+      reports.push(await analyzeDocument(data, doc.name, doc.mimeType || null));
+    } catch (error) {
+      if (error instanceof Error && error.name === "UnsupportedFormatError") throw new ApiError(error.message, 415);
+      throw error;
+    }
+  }
+  return aggregate(reports);
+}
+
+export async function analyzeDocuments(documents: ScanDocument[], signal?: AbortSignal): Promise<AnalysisResult> {
+  if ((await getAnalysisMode()) === "device") return analyzeDocumentsLocally(documents, signal);
+  return analyzeDocumentsRemotely(documents, signal);
+}
+
+/** Sends the files to a SANAD backend (`backend/`); optional, for development or server-side analysis. */
+export async function analyzeDocumentsRemotely(
   documents: ScanDocument[],
   signal?: AbortSignal,
 ): Promise<AnalysisResult> {
@@ -50,7 +97,11 @@ export async function analyzeDocuments(
 
   let response: Response;
   try {
-    response = await fetch(`${apiUrl}/analyze`, { method: "POST", body: form, signal: controller.signal });
+    response = await fetch(`${apiUrl}/analyze`, {
+      method: "POST",
+      body: form,
+      signal: controller.signal,
+    });
   } catch (error) {
     if (timedOut) {
       throw new ApiError(
